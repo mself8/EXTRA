@@ -130,7 +130,7 @@ def main():
     # coach panel: red = dropped by at least one model, grey = kept by both
     draw(axes[0],XY,coach,set(coach)-dropped,NAME,RED,None,{p:f"off {OFF[p]:.0f}'" for p in coach if p in OFF},'')
     gaps={}
-    for ax,arm,title in [(axes[1],'event','EventXI (event data)'),(axes[2],'phase','EXTRA (event + phase-tracking data)')]:
+    for ax,arm,title in [(axes[1],'event','Ours: event data'),(axes[2],'phase','Ours: event + tracking data')]:
         d=best['arms'][arm];sc={int(k):v for k,v in d['sc'].items()}
         MP=V.spread(V.model_xy({int(k):tuple(v) for k,v in d['slot'].items()},d['gk'],CW),dx=24.,dy=18.,iters=600)
         slot={int(k):tuple(v) for k,v in d['slot'].items()}

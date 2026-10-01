@@ -2,7 +2,9 @@
 
 <img src="docs/assets/logo.svg" alt="EXTRA" width="560">
 
-### Phase-Aware Tracking for Starting-Eleven Recommendation in Soccer
+## Recommending the Starting Eleven from Event and Tracking Data in Soccer
+
+*Code name: EXTRA (EventXI with TRAcking)*
 
 **EXTRA (EventXI with TRAcking) turns the optical tracking that clubs already collect into a pre-match input for choosing the starting eleven.**
 
@@ -82,9 +84,12 @@ histories from 2024 on; five-seed averages.
 
 | Model | Out-of-sample R² (npxG difference) |
 |---|---|
-| Linear baseline | 0.144 |
-| EventXI (event data) | 0.162 |
-| **EXTRA (event + phase-tracking data)** | **0.177** |
+| Season and venue only | 0.049 |
+| Past minutes sum of the fielded eleven | 0.052 |
+| Past VAEP sum of the fielded eleven | 0.081 |
+| Linear model, event features | 0.144 |
+| Ours, event data (EventXI) | 0.162 |
+| **Ours, event + tracking data (EXTRA)** | **0.177** |
 
 EXTRA improves on EventXI by +0.015 R² (positive in 90% of 2,000 paired match-bootstrap
 resamples; the 95% interval, [−0.006, +0.038], still includes zero). Across 741 outfield players, even within the same position the players
@@ -92,14 +97,14 @@ with the highest high-intensity share in the attacking phases are largely differ
 from those with the highest share in the pressing phase (rank correlations 0.16–0.17).
 
 <p align="center">
-  <img src="docs/assets/case_study.png" alt="Case study: coach's eleven, EventXI and EXTRA recommendations" width="900">
+  <img src="docs/assets/case_study.png" alt="Case study: coach's eleven and our two recommendations" width="900">
 </p>
 
 **Case study** — Jeonbuk Hyundai Motors vs Gwangju FC, 23 February 2025: the coach's
-declared eleven (left) and the EventXI (middle) and EXTRA (right) recommendations from the
-same squad and constraints. Blue: added (player score); red: dropped; black outline: one
-model only; rings mark players substituted on or off, with the minute. An illustrative
-example, not evidence of better substitution prediction.
+declared eleven (left) and our recommendations from event data (middle) and from event and
+tracking data (right), from the same squad and constraints. Blue: added (player score); red:
+dropped; black outline: one model only; rings mark players substituted on or off, with the
+minute. An illustrative example, not evidence of better substitution prediction.
 
 ## Phase definitions
 
@@ -117,8 +122,8 @@ Frames with the ball out of play or no clear team in possession are not labelled
 ## Installation
 
 ```bash
-git clone https://github.com/mself8/EXTRA.git
-cd EXTRA
+git clone https://github.com/mself8/Recommending-the-Starting-Eleven-from-Event-and-Tracking-Data-in-Soccer.git
+cd Recommending-the-Starting-Eleven-from-Event-and-Tracking-Data-in-Soccer
 python -m venv .venv && source .venv/bin/activate
 pip install -r vaep/requirements.txt "torch>=2.0" scipy
 # the case-study figure uses the Noto Sans font (e.g. apt install fonts-noto-core)
@@ -142,6 +147,7 @@ bash tracking/run_eventxi_arms.sh           # EventXI vs EXTRA trained on 2021-2
 python tracking/eval_arms.py
 bash tracking/run_eventxi_2024only.sh       # EventXI vs EXTRA, train 2024 / test 2025, 5 seeds
 python tracking/eval_2024only.py            # Table 1 (TRAINFROM=2024 HISTFROM=2024)
+python tracking/baselines_2024only.py        # Table 1 naive baselines (season/venue, past minutes, past VAEP)
 
 python case_study/prepare_lineup_cases.py   # announced squads, past-only positions
 python case_study/score_lineup.py event --h24
@@ -160,7 +166,7 @@ fixed in a later release.
 
 | Abstract | Script |
 |---|---|
-| Table 1 (2025 held-out R²) | `tracking/eval_2024only.py` |
+| Table 1 (2025 held-out R²) | `tracking/eval_2024only.py`, `tracking/baselines_2024only.py` |
 | Within-position rank correlations | `tracking/phase_descriptives.py` |
 | Figure 1 (case study) | `case_study/coach_case_figure.py` |
 | All three, in one place | [`notebooks/reproduce_abstract.ipynb`](notebooks/reproduce_abstract.ipynb) |
