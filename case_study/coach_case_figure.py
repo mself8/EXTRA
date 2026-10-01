@@ -61,12 +61,12 @@ def draw(ax,XY,ids,both,NAME,col,sc,mark,mark_lbl,only=()):
         if pos=='left':return (x-2.5-w,x-2.5+0,y-4.6-h,y-4.6)          # below, extending left
         return (x+2.5,x+2.5+w,y-4.6-h,y-4.6)                          # below, extending right
     def hit(a,b):return a[0]<b[1] and b[0]<a[1] and a[2]<b[3] and b[2]<a[3]
-    discs=[(x-4.5,x+4.5,y-4.5,y+4.5) for x,y in P.values()]
+    discs=[(x-3.2,x+3.2,y-3.2,y+3.2) for x,y in P.values()]
     placed=[];where={}
     for q in sorted(P,key=lambda q:(-hgt[q],-wid[q])):                # big labels choose first
         for pos in ('below','above','left','right'):
             bx=box(q,pos);x,y=P[q]
-            own=(x-4.5,x+4.5,y-4.5,y+4.5)
+            own=(x-3.2,x+3.2,y-3.2,y+3.2)
             inside=bx[0]>=-6 and bx[1]<=W+6 and bx[2]>=-8 and bx[3]<=L+1
             if inside and not any(hit(bx,o) for o in placed) and not any(hit(bx,d) for d in discs if d!=own):break
         else:pos='below'
@@ -118,7 +118,9 @@ def main():
         for p in shown:
             if NAME.get(p) in dup and p in EN:
                 w=EN[p].split();sur=[x for x in w if x.isupper() and len(x)>1]
-                NAME[p]=f"{' '.join(x for x in w if x not in sur).title()} {sur[-1].capitalize() if sur else ''}".strip()
+                if not sur or len(sur)==len(w):sur=[w[-1]]           # all-caps or no caps: the last token is the surname
+                giv=[x for x in w if x not in sur]
+                NAME[p]=f"{''.join(giv).capitalize() if len(giv)>1 and all(x.isupper() for x in giv) else ' '.join(x.title() for x in giv)} {sur[-1].capitalize()}".strip()
         print('disambiguated',{p:NAME[p] for p in shown if p in EN and ' ' in NAME[p] and '.' not in NAME[p]})
     TEAM={int(r.team_id):str(r.team_name) for r in pd.read_csv(TB/'vaep/output/teams.csv').itertuples(index=False)}
     XY,_=V.match_xy(gid);XY=V.spread({p:XY[p] for p in coach if p in XY},dx=24.,dy=18.,iters=600)

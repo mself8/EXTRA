@@ -118,7 +118,7 @@ from those with the highest share in the pressing phase (rank correlations 0.16�
   <img src="docs/assets/case_study.png" alt="Case study: coach's eleven and our two recommendations" width="900">
 </p>
 
-**Case study** — Jeonbuk Hyundai Motors vs Gwangju FC, 23 February 2025: the coach's
+**Case study** — Gimcheon Sangmu vs Jeonbuk Hyundai Motors, 16 February 2025: the coach's
 declared eleven (left) and our recommendations from event data (middle) and from event and
 tracking data (right), from the same squad and constraints. Blue: added (player score); red:
 dropped; black outline: one model only; rings mark players substituted on or off, with the
@@ -171,7 +171,7 @@ python case_study/prepare_lineup_cases.py   # announced squads, past-only positi
 python case_study/score_lineup.py event --h24
 python case_study/score_lineup.py phase --h24
 SUF=_h24 python case_study/scan_coach_cases.py 0 1
-SUF=_h24 python case_study/coach_case_figure.py --pin 165309:4640   # case-study figure
+SUF=_h24 python case_study/coach_case_figure.py --pin 165303:2353   # case-study figure
 ```
 
 **Reproducibility status.** The EXTRA stages — tracking tables, training, evaluation and
