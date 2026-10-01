@@ -1,0 +1,92 @@
+# 데이터 (용량·라이선스)
+raw-data/
+vaep/output/
+outputs/
+
+# Python 캐시
+.venv/
+__pycache__/
+*.py[cod]
+*.pyo
+
+# 모델/데이터 바이너리
+*.pt
+*.parquet
+*.csv.bak
+
+# 에디터/OS
+.DS_Store
+.vscode/
+*.swp
+
+
+paper/
+# 실험 산출 이미지·덤프 (paper*/fig 에 최종본만 둔다)
+experiments/*.png
+experiments/*.txt
+*.pdf
+
+# LaTeX 중간 산출물·백업
+paper*/*.aux
+paper*/*.bbl
+paper*/*.blg
+paper*/*.fdb_latexmk
+paper*/*.fls
+paper*/*.log
+paper*/*.out
+paper*/*.synctex.gz
+*.tex.bak_*
+
+# 그림 원본 (논문에 쓰는 것만 paper*/fig 에 둔다)
+experiments/_archive/fig/
+experiments/_archive/
+# 슬래시 패턴은 같은 이름의 심볼릭 링크를 놓치므로 둘 다 둔다
+raw-data-2026/
+raw-data-2026
+paper*/*.xdv
+
+# ── 데이터 반출 금지 (원격에 절대 올리지 않는다) ──────────────────
+# 원본·중간·최종 데이터
+raw-data*/
+data/
+vaep/output/
+outputs/
+gk_research/
+*.parquet
+*.pkl
+*.npz
+*.npy
+*.pt
+*.pth
+*.csv
+*.tsv
+*.feather
+*.h5
+*.db
+*.sqlite
+# 선수 식별·명부 (개인정보)
+player_id*.json
+pid_*.json
+*_bridge*.json
+*_merge*.json
+# 노트북은 출력에 데이터가 박히므로 통째로 제외
+*.ipynb
+
+# ── 논문·미공개 문서 (원격에 올리지 않는다) ──────────────────
+paper/
+paper2/
+paper3/
+paper4/
+paper*_draft*
+docs/
+*.pdf
+*.pptx
+
+# EXTRA: tracking inputs, logs and figures (contain licensed data)
+data/
+logs/
+figures/
+*.parquet
+*.npz
+*.pt
+*.pkl

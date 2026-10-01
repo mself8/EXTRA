@@ -1,0 +1,20 @@
+#!/usr/bin/env bash
+# 데이터 파일이 커밋에 들어가는 것을 막는다. 우회가 필요하면 git commit --no-verify.
+set -euo pipefail
+BLOCKED_EXT='\.(parquet|pkl|pickle|npz|npy|pt|pth|csv|tsv|feather|h5|hdf5|db|sqlite3?|ipynb)$'
+BLOCKED_DIR='^(outputs|raw-data|raw-data-2026|data|gk_research|vaep/output)/'
+BLOCKED_NAME='(player_id.*\.json|pid_.*\.json|.*_bridge.*\.json|.*_merge.*\.json)$'
+staged=$(git diff --cached --name-only --diff-filter=ACMR)
+bad=$(printf '%s\n' "$staged" | grep -EI "$BLOCKED_EXT|$BLOCKED_DIR|$BLOCKED_NAME" || true)
+if [ -n "$bad" ]; then
+  echo "커밋 거부: 데이터 파일이 포함되어 있습니다." >&2
+  printf '  %s\n' $bad >&2
+  echo "git rm --cached <파일> 로 제외하세요. .gitignore 도 확인하십시오." >&2
+  exit 1
+fi
+# 큰 파일도 막는다 (5MB)
+for f in $staged; do
+  [ -f "$f" ] || continue
+  sz=$(stat -c%s "$f")
+  if [ "$sz" -gt 5242880 ]; then echo "커밋 거부: 5MB 초과 파일 $f ($((sz/1024/1024))MB)" >&2; exit 1; fi
+done
