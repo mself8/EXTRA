@@ -23,7 +23,7 @@ import viz_side as V
 SUF=os.environ.get('SUF','_existing')
 L,W=V.L,V.W
 GRAY,RED,BLUE='#9aa3a0','#c2453c','#1f6fb2'
-FS_NAME,FS_HEAD=7.0,8.0
+FS_NAME,FS_HEAD=7.6,8.8
 from matplotlib import font_manager
 for _f in ['NotoSans-Regular.ttf','NotoSans-Bold.ttf']:font_manager.fontManager.addfont('/usr/share/fonts/truetype/noto/'+_f)
 plt.rcParams['font.family']='Noto Sans'
@@ -35,7 +35,7 @@ def pitch(ax,title):
     ax.plot([0,W],[L/2,L/2],c='#9aa79a',lw=.7,zorder=1)
     for y0 in (0,L-16.5):ax.add_patch(Rectangle(((W-40.3)/2,y0),40.3,16.5,fc='none',ec='#9aa79a',lw=.7,zorder=1))
     ax.add_patch(plt.Circle((W/2,L/2),9.15,fill=False,ec='#9aa79a',lw=.7,zorder=1))
-    ax.set_xlim(-7,W+7);ax.set_ylim(-9,L+2);ax.set_aspect('equal');ax.axis('off')
+    ax.set_xlim(-2.5,W+2.5);ax.set_ylim(-9,L+2);ax.set_aspect('equal');ax.axis('off')
     ax.set_title(title,fontsize=FS_HEAD,pad=3.,color='#222222',fontweight='bold')
 
 def draw(ax,XY,ids,both,NAME,col,sc,mark,mark_lbl,only=()):
@@ -127,7 +127,7 @@ def main():
     TEAM={int(r.team_id):str(r.team_name) for r in pd.read_csv(TB/'vaep/output/teams.csv').itertuples(index=False)}
     XY,_=V.match_xy(gid);XY=V.spread({p:XY[p] for p in coach if p in XY},dx=24.,dy=18.,iters=600)
     CW=V.career_width()
-    fig,axes=plt.subplots(1,3,figsize=(7.1,4.0))
+    fig,axes=plt.subplots(1,3,figsize=(7.1,4.75))
     pitch(axes[0],"Coach's eleven\n(declared)")
     E,P=best['arms']['event'],best['arms']['phase']
     dropped=(set(coach)-set(E['xi']))|(set(coach)-set(P['xi']))
@@ -148,13 +148,13 @@ def main():
     fc='-'.join(str(x) for x in np.asarray(c.G).sum(1) if x)
     hdr=f"{best['date']}   {TEAM.get(tid,tid)} vs {TEAM.get(int(best['oid']),best['oid'])}   ·   declared {fc}"+(f"   ·   realised npxG difference {y:+.2f}" if y is not None else '')
     fig.text(.5,.975,hdr,ha='center',va='bottom',fontsize=FS_HEAD,color='#111111')
-    lg=[Line2D([],[],marker='o',ls='',ms=5,mfc=GRAY,mec='white',label='kept from the coach\'s eleven'),
-        Line2D([],[],marker='o',ls='',ms=5,mfc=RED,mec='white',label='dropped by a model'),
-        Line2D([],[],marker='o',ls='',ms=5,mfc=BLUE,mec='white',label='added by the model (player score)'),
-        Line2D([],[],marker='o',ls='',ms=5,mfc='white',mec='#111111',mew=1.5,label='only in this model'),
-        Line2D([],[],marker='o',ls='',ms=8,mfc='none',mec='#555555',label='substituted on/off during the match')]
-    fig.legend(handles=lg,loc='lower center',ncol=5,frameon=False,columnspacing=1.0,handletextpad=.3,fontsize=FS_HEAD-.6,bbox_to_anchor=(.5,.005))
-    fig.subplots_adjust(wspace=.04,left=.005,right=.995,top=.93,bottom=.05)
+    lg=[Line2D([],[],marker='o',ls='',ms=6.5,mfc=GRAY,mec='white',label='kept from the coach\'s eleven'),
+        Line2D([],[],marker='o',ls='',ms=6.5,mfc=RED,mec='white',label='dropped by a model'),
+        Line2D([],[],marker='o',ls='',ms=6.5,mfc=BLUE,mec='white',label='added by the model (player score)'),
+        Line2D([],[],marker='o',ls='',ms=6.5,mfc='white',mec='#111111',mew=1.5,label='only in this model'),
+        Line2D([],[],marker='o',ls='',ms=10,mfc='none',mec='#555555',label='substituted on/off during the match')]
+    fig.legend(handles=[lg[i] for i in (0,3,1,4,2)],loc='lower center',ncol=3,frameon=False,columnspacing=.8,handletextpad=.3,fontsize=FS_HEAD+.6,bbox_to_anchor=(.5,.0))
+    fig.subplots_adjust(wspace=.08,left=.005,right=.995,top=.90,bottom=.075)
     Path(a.out).parent.mkdir(parents=True,exist_ok=True)
     for ext in ['png','pdf']:fig.savefig(f'{a.out}.{ext}',dpi=400,bbox_inches='tight')
     meta=dict(case={k:best[k] for k in ['gid','tid','oid','date','coach_event','coach_phase','event_phase']},score_gap=gaps,on=ON,off=OFF,npxg_diff=y,
