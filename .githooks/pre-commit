@@ -5,7 +5,7 @@ BLOCKED_EXT='\.(parquet|pkl|pickle|npz|npy|pt|pth|csv|tsv|feather|h5|hdf5|db|sql
 BLOCKED_DIR='^(outputs|raw-data|raw-data-2026|data|gk_research|vaep/output)/'
 BLOCKED_NAME='(player_id.*\.json|pid_.*\.json|.*_bridge.*\.json|.*_merge.*\.json)$'
 staged=$(git diff --cached --name-only --diff-filter=ACMR)
-bad=$(printf '%s\n' "$staged" | grep -EI "$BLOCKED_EXT|$BLOCKED_DIR|$BLOCKED_NAME" || true)
+bad=$(printf '%s\n' "$staged" | grep -EI "$BLOCKED_EXT|$BLOCKED_DIR|$BLOCKED_NAME" | grep -v '^notebooks/[^/]*\.ipynb$' || true)
 if [ -n "$bad" ]; then
   echo "커밋 거부: 데이터 파일이 포함되어 있습니다." >&2
   printf '  %s\n' $bad >&2

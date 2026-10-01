@@ -7,6 +7,7 @@ Substitution minutes and the realised npxG difference are drawn only after the c
 Run: python coach_case_figure.py [--pin gid:tid]
 """
 import os,sys,json,argparse
+from pathlib import Path
 from collections import defaultdict
 import numpy as np
 import pandas as pd

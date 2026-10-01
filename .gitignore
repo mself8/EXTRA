@@ -78,7 +78,8 @@ paper2/
 paper3/
 paper4/
 paper*_draft*
-docs/
+docs/*
+!docs/assets/
 *.pdf
 *.pptx
 
@@ -90,3 +91,6 @@ figures/
 *.npz
 *.pt
 *.pkl
+
+# reproduction notebook (aggregate outputs only)
+!notebooks/*.ipynb

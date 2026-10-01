@@ -1,70 +1,191 @@
-# EXTRA — Phase-Aware Tracking for Starting-Eleven Recommendation in Soccer
+<div align="center">
 
-EXTRA (**E**vent**X**I with **TRA**cking) adds phase-organised optical tracking to
-EventXI, an event-based model that recommends a starting eleven and predicts the
-non-penalty expected-goal (npxG) difference from the two starting elevens.
-This repository holds the code behind the SSAC 2027 abstract.
+<img src="docs/assets/logo.svg" alt="EXTRA" width="560">
 
-**No data are included.** The K League event, lineup and tracking data are licensed
-from the league's official data provider and cannot be redistributed. The repository
-contains no raw, intermediate or final data and no model checkpoints; `.gitignore`
-and `.githooks/pre-commit` block them from being committed
-(`git config core.hooksPath .githooks`).
+### Phase-Aware Tracking for Starting-Eleven Recommendation in Soccer
 
-## What EXTRA adds to EventXI
+**EXTRA (EventXI with TRAcking) turns the optical tracking that clubs already collect into a pre-match input for choosing the starting eleven.**
 
-1. **Phase labels** (`tracking/phase_tables.py`). From 30 Hz tracking, every 0.1 s of
-   live play with a clear team in possession is labelled with one of six phases:
-   build-up (own possession, ball in the first 40% of the pitch), settled attack,
-   attacking and defensive transition (5 s after an in-play turnover), pressing
-   (two or more players within 10 m of the opponent's ball, one closing at over
-   3 m/s) and settled defence.
-2. **Phase profiles** (`tracking/trk_channels.py`). Per player and match, each phase
-   over six pitch-depth bands: time spent, mean speed, high-intensity share
-   (> 5.5 m/s) and pressing engagement.
-3. **Model input** (`experiments/player_encoder_cnn.py`, `TRK=1 TRKMODE=phase`).
-   The six profiles become six new rows of EventXI's player-match tensor; matches
-   without tracking enter as zero rows with a missing-tracking indicator.
-4. **Training window** (`experiments/player_encoder_set.py`). `TRAINFROM=2024`
-   restricts training matches to seasons with tracking and `HISTFROM=2024` restricts
-   player histories to the same seasons. Both default to off, which reproduces EventXI.
+[![License](https://img.shields.io/badge/code-MIT-blue.svg)](#license)
+[![Python](https://img.shields.io/badge/python-3.10%2B-blue.svg)](https://www.python.org/)
+[![PyTorch](https://img.shields.io/badge/PyTorch-%E2%89%A52.0-orange.svg)](https://pytorch.org/)
+[![Venue](https://img.shields.io/badge/SSAC-2027%20abstract-lightgrey.svg)](#citation)
+[![Data](https://img.shields.io/badge/data-not%20included-red.svg)](#data-availability)
 
-## Layout
+[Why EXTRA](#why-extra) · [Features](#features) · [Architecture](#architecture) · [Results](#results) · [Phases](#phase-definitions) · [Install](#installation) · [Reproduce](#reproducing-the-abstract) · [Layout](#repository-layout) · [Roadmap](#roadmap) · [Citation](#citation)
 
+</div>
+
+---
+
+Before every match a coach names eleven starters from a squad of about nineteen.
+Event-based lineup models see what players do **on the ball**; part of a lineup's
+value lies **off the ball** and depends on the phase of play — who presses, who
+holds the line, who runs in transition.
+
+**EXTRA** extends **EventXI**, an event-based lineup recommender, with player
+profiles built from 30 Hz optical tracking and organised by six phases of play.
+The model that scores players for outcome prediction also drives a constrained
+recommender, so the tracking information flows straight into the recommended
+starting eleven that staff review before kick-off.
+
+## Why EXTRA
+
+| | EventXI | **EXTRA** |
+|---|---|---|
+| Player evidence | Event channels × pitch-depth bands, pooled over each player's past matches | EventXI **+ phase-organised tracking profiles** |
+| Off-ball work | Not seen | Speed, high-intensity share, pressing engagement and time, per phase and depth band |
+| Output | Outcome prediction from the two elevens + constrained starting-eleven recommendation | Same, with tracking in every player score |
+| Data needed | Event data | Event data + one season of tracking; matches without tracking are flagged |
+| Staff view | Recommended eleven and player scores | Recommended eleven, player scores **and phase profiles** |
+
+## Features
+
+- **Phase labels from tracking** — every 0.1 s of live play with a clear team in possession is labelled as build-up, settled attack, attacking transition, pressing, settled defence or defensive transition.
+- **Phase profiles per player** — for each phase and each of six pitch-depth bands: time spent, mean speed, high-intensity share (> 5.5 m/s) and pressing engagement.
+- **Drop-in for EventXI** — the six profiles become six new rows of EventXI's player-match tensor (`TRK=1 TRKMODE=phase`); a missing-tracking indicator covers matches without tracking.
+- **One-season training window** — `TRAINFROM` and `HISTFROM` restrict training matches and player histories to seasons with tracking, so no zero-filled history enters the model.
+- **Leakage-safe evaluation** — the 2025 season is held out; player histories use only matches strictly before the target match; a paired match bootstrap gives the uncertainty.
+- **Case-study tooling** — lineup solver, case scan and the three-panel figure (coach's eleven, EventXI, EXTRA).
+
+## Architecture
+
+```mermaid
+flowchart LR
+    subgraph DATA["Inputs (licensed, not included)"]
+        EV["Event data<br/>2021–25"]
+        TR["Optical tracking 30 Hz<br/>2024–25"]
+    end
+    subgraph TRK["tracking/"]
+        PH["Phase labels<br/>6 phases, every 0.1 s"]
+        PR["Phase profiles<br/>phase × 6 depth bands × 4 metrics"]
+    end
+    subgraph XI["EventXI encoder (experiments/)"]
+        T["Player-match tensor<br/>event rows + 6 phase rows"]
+        H["History pooling<br/>matches before kick-off only"]
+        S["Player scores"]
+        SET["Eleven-vs-eleven set block"]
+    end
+    EV --> T
+    TR --> PH --> PR --> T
+    T --> H --> S --> SET --> Y["npxG difference<br/>outcome prediction"]
+    S --> REC["Constrained recommender<br/>formations · positions · foreign-player cap"]
+    REC --> OUT["Recommended starting eleven<br/>+ player scores + phase profiles"]
 ```
-experiments/  gnn/  scripts/  vaep/   EventXI (see README_EventXI.md) + the options above
-tracking/     phase labels, tracking channels, descriptive statistics, training runs, evaluation
-case_study/   player scores, outcome-blind lineup solver, case scan, Figure 1
-```
 
-Comments and docstrings are partly in Korean.
+## Results
+
+2025 season held out (982 team-matches); models trained on 2024 with player
+histories from 2024 on; five-seed averages.
+
+| Model | Out-of-sample R² (npxG difference) |
+|---|---|
+| Linear baseline | 0.144 |
+| EventXI (event data) | 0.162 |
+| **EXTRA (event + phase-tracking data)** | **0.177** |
+
+EXTRA improves on EventXI by +0.015 R² (positive in 90% of 2,000 paired match-bootstrap
+resamples; the 95% interval, [−0.006, +0.038], still includes zero). Across 741 outfield players, even within the same position the players
+with the highest high-intensity share in the attacking phases are largely different
+from those with the highest share in the pressing phase (rank correlations 0.16–0.17).
+
+<p align="center">
+  <img src="docs/assets/case_study.png" alt="Case study: coach's eleven, EventXI and EXTRA recommendations" width="900">
+</p>
+
+**Case study** — Jeonbuk Hyundai Motors vs Gwangju FC, 23 February 2025: the coach's
+declared eleven (left) and the EventXI (middle) and EXTRA (right) recommendations from the
+same squad and constraints. Blue: added (player score); red: dropped; black outline: one
+model only; rings mark players substituted on or off, with the minute. An illustrative
+example, not evidence of better substitution prediction.
+
+## Phase definitions
+
+| Phase | Rule (team perspective, 10 Hz) |
+|---|---|
+| Build-up | Own possession, ball in the first 40% of the pitch in the attacking direction |
+| Settled attack | Other own possession |
+| Attacking transition | 5 s after winning the ball in play (not after a restart) |
+| Pressing | Opponent possession; two or more players within 10 m of the ball, at least one closing at over 3 m/s |
+| Settled defence | Other opponent possession |
+| Defensive transition | 5 s after losing the ball in play |
+
+Frames with the ball out of play or no clear team in possession are not labelled.
+
+## Installation
+
+```bash
+git clone https://github.com/mself8/EXTRA.git
+cd EXTRA
+python -m venv .venv && source .venv/bin/activate
+pip install -r vaep/requirements.txt "torch>=2.0" scipy
+# the case-study figure uses the Noto Sans font (e.g. apt install fonts-noto-core)
+git config core.hooksPath .githooks   # blocks data files from being committed
+```
 
 ## Reproducing the abstract
 
-Run from the repository root. GPU ids in the shell scripts are set with `GPU_A`, `GPU_B`, `GPU_C`. Paths to the licensed inputs are set with
-`TRACKING_DIR` (Bepro `tracking.parquet` / `lineup.json` per match) and
-`MATCH_INFO_DIR` (`info.json` with pitch size).
+Run from the repository root. Licensed inputs are located with `TRACKING_DIR`
+(per-match `tracking.parquet` / `lineup.json`) and `MATCH_INFO_DIR` (`info.json` with
+pitch size); EventXI's own inputs are described in [README_EventXI.md](README_EventXI.md).
+GPU ids in `tracking/*.sh` are set with `GPU_A`, `GPU_B`, `GPU_C`.
 
 ```bash
 bash scripts/01_features.sh                 # EventXI: events -> SPADL/VAEP -> player-match features
 python tracking/phase_tables.py             # phase labels and player/team phase tables
 python tracking/trk_channels.py             # phase profiles -> outputs/trk_channels.parquet
-python tracking/phase_descriptives.py       # phase shares, reliability, between-phase rank correlations
+python tracking/phase_descriptives.py       # phase shares, reliability, within-position rank correlations
 
 bash tracking/run_eventxi_arms.sh           # EventXI vs EXTRA trained on 2021-24 (comparison)
 python tracking/eval_arms.py
-bash tracking/run_eventxi_2024only.sh       # EventXI vs EXTRA, train 2024 / test 2025, 5 seeds, stage 1 -> 2
-python tracking/eval_2024only.py            # Table 1 (TRAINFROM=2024 HISTFROM=2024); also reads the 2021-24 runs
+bash tracking/run_eventxi_2024only.sh       # EventXI vs EXTRA, train 2024 / test 2025, 5 seeds
+python tracking/eval_2024only.py            # Table 1 (TRAINFROM=2024 HISTFROM=2024)
 
 python case_study/prepare_lineup_cases.py   # announced squads, past-only positions
 python case_study/score_lineup.py event --h24
 python case_study/score_lineup.py phase --h24
 SUF=_h24 python case_study/scan_coach_cases.py 0 1
-SUF=_h24 python case_study/coach_case_figure.py --pin 165309:4640   # Figure 1
+SUF=_h24 python case_study/coach_case_figure.py --pin 165309:4640   # case-study figure
 ```
 
-| Abstract | Output |
+| Abstract | Script |
 |---|---|
-| Table 1 (2025 held-out R²: linear 0.144, EventXI 0.162, EXTRA 0.177) | `tracking/eval_2024only.py` |
-| Between-phase rank correlations within position | `tracking/phase_descriptives.py` |
-| Figure 1 (Jeonbuk vs Gwangju, 23 Feb 2025) | `case_study/coach_case_figure.py` |
+| Table 1 (2025 held-out R²) | `tracking/eval_2024only.py` |
+| Within-position rank correlations | `tracking/phase_descriptives.py` |
+| Figure 1 (case study) | `case_study/coach_case_figure.py` |
+| All three, in one place | [`notebooks/reproduce_abstract.ipynb`](notebooks/reproduce_abstract.ipynb) |
+
+## Data availability
+
+**No data are included.** The K League event, lineup and tracking data are licensed from
+the league's official data provider and cannot be redistributed. The repository contains
+no raw, intermediate or final data and no model checkpoints; `.gitignore` and
+`.githooks/pre-commit` block them from being committed. The scripts document the expected
+inputs so that the pipeline can be run on equivalent data.
+
+## Repository layout
+
+```
+experiments/  gnn/  scripts/  vaep/   EventXI (README_EventXI.md) + TRK / TRAINFROM / HISTFROM options
+tracking/     phase labels, phase profiles, descriptive statistics, training runs, evaluation
+case_study/   player scores, lineup solver, case scan, case-study figure
+notebooks/    reproduce_abstract.ipynb — Table 1, rank correlations and the case-study figure
+docs/assets/  logo and README figure
+```
+
+Comments and docstrings are partly in Korean.
+
+## Roadmap
+
+- Bring seasons without tracking back into training with a learned missing-data model.
+- Weight phase profiles by the phase mix a team is expected to play against a given opponent.
+- Evaluate recommended elevens against match outcomes, not only outcome prediction.
+
+## Citation
+
+SSAC 2027 Research Paper Competition, abstract under review. Citation details will be
+added after review.
+
+## License
+
+Code: MIT, as for EventXI. The data are not covered.
