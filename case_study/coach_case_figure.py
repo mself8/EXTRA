@@ -54,16 +54,18 @@ def draw(ax,XY,ids,both,NAME,col,sc,mark,mark_lbl,only=()):
         return l+([sub] if sub else [])
     wid={q:1.9*max(len(t) for t in lines(q))+1.5 for q in P}       # label box in metres at this size
     hgt={q:3.9*len(lines(q)) for q in P}
+    def cx(q):                                # centred labels are pulled inside the pitch instead of being rejected
+        x=P[q][0];w=wid[q];return min(max(x,-6+w/2),W+6-w/2)
     def box(q,pos):
         x,y=P[q];w,h=wid[q],hgt[q]
-        if pos=='below':return (x-w/2,x+w/2,y-4.6-h,y-4.6)
-        if pos=='above':return (x-w/2,x+w/2,y+4.6,y+4.6+h)
+        if pos=='below':return (cx(q)-w/2,cx(q)+w/2,y-4.6-h,y-4.6)
+        if pos=='above':return (cx(q)-w/2,cx(q)+w/2,y+4.6,y+4.6+h)
         if pos=='left':return (x-2.5-w,x-2.5+0,y-4.6-h,y-4.6)          # below, extending left
         return (x+2.5,x+2.5+w,y-4.6-h,y-4.6)                          # below, extending right
     def hit(a,b):return a[0]<b[1] and b[0]<a[1] and a[2]<b[3] and b[2]<a[3]
     discs=[(x-3.2,x+3.2,y-3.2,y+3.2) for x,y in P.values()]
     placed=[];where={}
-    for q in sorted(P,key=lambda q:(-hgt[q],-wid[q])):                # big labels choose first
+    for q in sorted(P,key=lambda q:(-hgt[q],-wid[q],-abs(P[q][0]-W/2))):   # big labels first; among equals, nodes near the touchline (fewer options) first
         for pos in ('below','above','left','right'):
             bx=box(q,pos);x,y=P[q]
             own=(x-3.2,x+3.2,y-3.2,y+3.2)
@@ -80,7 +82,7 @@ def draw(ax,XY,ids,both,NAME,col,sc,mark,mark_lbl,only=()):
         if p in mark:sub+=('  ' if sub else '')+mark[p]
         if sub:lbl+='\n'+sub
         pos=where[p];above=pos=='above'
-        ha={'left':'right','right':'left'}.get(pos,'center');xt=x+(-2.5 if pos=='left' else 2.5 if pos=='right' else 0)
+        ha={'left':'right','right':'left'}.get(pos,'center');xt=x-2.5 if pos=='left' else x+2.5 if pos=='right' else cx(p)
         t=ax.text(xt,y+(4.6 if above else -4.6),lbl,ha=ha,multialignment='center',va='bottom' if above else 'top',fontsize=FS_NAME,zorder=6,linespacing=1.02,
                   color='#333333' if p in both and p not in only else '#111111',fontweight='normal' if p in both and p not in only else 'bold')
         t.set_path_effects([pe.withStroke(linewidth=1.9,foreground='white')])
