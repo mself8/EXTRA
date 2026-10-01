@@ -9,3 +9,4 @@ pandera[pandas]>=0.17
 multimethod==1.9
 matplotlib>=3.7
 jupyter
+requests

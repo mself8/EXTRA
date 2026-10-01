@@ -1,8 +1,8 @@
-# EventXI — code for double-blind review
+# EventXI — event-only base model
 
 EventXI recommends a starting eleven and a formation for the next match from
 event data alone, and tests the recommendation against match outcomes.
-This repository holds the code behind the paper, anonymized for review.
+This folder holds the EventXI code that EXTRA builds on.
 
 **No data are included.** The event and lineup data are licensed from the
 league's official data provider (Bepro) and cannot be redistributed. The
@@ -69,7 +69,7 @@ raw-data-2026/
 ## Requirements
 
 Python 3, `torch>=2.0`, `pandas`, `numpy`, `scikit-learn`, `scipy`,
-`xgboost`, `catboost`, `matplotlib` (see `vaep/requirements.txt`).
+`xgboost`, `matplotlib`, `requests` (see `vaep/requirements.txt`).
 
 ## License
 

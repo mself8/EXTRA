@@ -4,7 +4,7 @@ Case choice reads only lineups from outputs/coach_case_scan{SUF}.json (or its sh
 the earliest case where both recommendations change the most coach starters (3-5 changes, readable),
 the two recommendations differ, and every coach starter is in the candidate pool.
 Substitution minutes and the realised npxG difference are drawn only after the case is fixed.
-Run: python coach_case_figure.py [--pin gid:tid]
+Run from the repository root: SUF=_h24 python case_study/coach_case_figure.py [--pin gid:tid]
 """
 import os,sys,json,argparse
 from pathlib import Path

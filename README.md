@@ -101,7 +101,7 @@ histories from 2024 on; five-seed averages.
 | Model | Out-of-sample R² (npxG difference) |
 |---|---|
 | Season and venue only | 0.049 |
-| Past minutes sum of the fielded eleven | 0.052 |
+| Past minutes sum of the fielded eleven | 0.051 |
 | Past VAEP sum of the fielded eleven | 0.081 |
 | Linear model, event features | 0.144 |
 | Ours, event data (EventXI) | 0.162 |
@@ -168,8 +168,8 @@ python tracking/eval_2024only.py            # Table 1 (TRAINFROM=2024 HISTFROM=2
 python tracking/baselines_2024only.py        # Table 1 naive baselines (season/venue, past minutes, past VAEP)
 
 python case_study/prepare_lineup_cases.py   # announced squads, past-only positions
-python case_study/score_lineup.py event --h24
-python case_study/score_lineup.py phase --h24
+python case_study/score_lineup.py event --h24 --limit 1000
+python case_study/score_lineup.py phase --h24 --limit 1000
 SUF=_h24 python case_study/scan_coach_cases.py 0 1
 SUF=_h24 python case_study/coach_case_figure.py --pin 165733:4646   # case-study figure
 ```

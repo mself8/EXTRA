@@ -1,7 +1,7 @@
 """Solve event and phase recommendations for every scored 2025 case and compare with the coach's XI.
 
 Selection uses only lineups (no xG, no substitutions): it is the input to choose an illustrative case.
-Run in shards: python scan_coach_cases.py <shard> <nshard>  -> outputs/coach_case_scan_existing.part<shard>.json
+Run in shards from the repository root: SUF=_h24 python case_study/scan_coach_cases.py <shard> <nshard>  -> outputs/coach_case_scan_h24.part<shard>.json
 """
 import os,sys,json
 import numpy as np
