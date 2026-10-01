@@ -2,7 +2,7 @@
 
 <img src="docs/assets/logo.svg" alt="EXTRA" width="560">
 
-## Recommending the Starting Eleven from Event and Tracking Data in Soccer
+## Recommending the Starting Eleven: Counterfactual Lineups from Event and Tracking Data
 
 *Code name: EXTRA (EventXI with TRAcking)*
 
@@ -140,8 +140,8 @@ Frames with the ball out of play or no clear team in possession are not labelled
 ## Installation
 
 ```bash
-git clone https://github.com/mself8/Recommending-the-Starting-Eleven-from-Event-and-Tracking-Data-in-Soccer.git
-cd Recommending-the-Starting-Eleven-from-Event-and-Tracking-Data-in-Soccer
+git clone https://github.com/mself8/Recommending-the-Starting-Eleven-Counterfactual-Lineups-from-Event-and-Tracking-Data.git
+cd Recommending-the-Starting-Eleven-Counterfactual-Lineups-from-Event-and-Tracking-Data
 python -m venv .venv && source .venv/bin/activate
 pip install -r vaep/requirements.txt "torch>=2.0" scipy
 # the case-study figure uses the Noto Sans font (e.g. apt install fonts-noto-core)
