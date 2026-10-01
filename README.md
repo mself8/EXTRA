@@ -12,7 +12,7 @@
 [![Venue](https://img.shields.io/badge/SSAC-2027%20abstract-lightgrey.svg)](#citation)
 [![Data](https://img.shields.io/badge/data-not%20included-red.svg)](#data-availability)
 
-[Why EXTRA](#why-extra) · [Features](#features) · [Architecture](#architecture) · [Results](#results) · [Phases](#phase-definitions) · [Install](#installation) · [Reproduce](#reproducing-the-abstract) · [Layout](#repository-layout) · [Roadmap](#roadmap) · [Citation](#citation)
+[Why EXTRA](#why-extra) · [Features](#features) · [Architecture](#architecture) · [Extension](#how-extra-extends-eventxi) · [Results](#results) · [Phases](#phase-definitions) · [Install](#installation) · [Reproduce](#reproducing-the-abstract) · [Layout](#repository-layout) · [Roadmap](#roadmap) · [Citation](#citation)
 
 </div>
 
@@ -50,28 +50,30 @@ starting eleven that staff review before kick-off.
 
 ## Architecture
 
-```mermaid
-flowchart LR
-    subgraph DATA["Inputs (licensed, not included)"]
-        EV["Event data<br/>2021–25"]
-        TR["Optical tracking 30 Hz<br/>2024–25"]
-    end
-    subgraph TRK["tracking/"]
-        PH["Phase labels<br/>6 phases, every 0.1 s"]
-        PR["Phase profiles<br/>phase × 6 depth bands × 4 metrics"]
-    end
-    subgraph XI["EventXI encoder (experiments/)"]
-        T["Player-match tensor<br/>event rows + 6 phase rows"]
-        H["History pooling<br/>matches before kick-off only"]
-        S["Player scores"]
-        SET["Eleven-vs-eleven set block"]
-    end
-    EV --> T
-    TR --> PH --> PR --> T
-    T --> H --> S --> SET --> Y["npxG difference<br/>outcome prediction"]
-    S --> REC["Constrained recommender<br/>formations · positions · foreign-player cap"]
-    REC --> OUT["Recommended starting eleven<br/>+ player scores + phase profiles"]
-```
+<p align="center">
+  <img src="docs/assets/architecture.svg" alt="EXTRA architecture: event data and phase profiles from tracking feed the EventXI encoder, which drives outcome prediction and the starting-eleven recommendation" width="760">
+</p>
+
+Blue parts come from EventXI; red parts are what EXTRA adds. Tracking is turned into
+phase labels and per-player phase profiles, which enter EventXI's player-match tensor;
+everything downstream — history pooling, player scores, the eleven-vs-eleven set block
+and the recommender — is EventXI's, so the tracking information reaches every player
+score and the recommended eleven.
+
+## How EXTRA extends EventXI
+
+<p align="center">
+  <img src="docs/assets/tensor.svg" alt="EventXI's player-match tensor with 62 event rows, extended by EXTRA with six phase rows" width="860">
+</p>
+
+EventXI describes each past match of a player as a tensor: **62 event rows × 6 pitch-depth
+bands × 4 faces** (VAEP value, offensive value, defensive value, count; the pass,
+reception, shot and defensive-action rows carry value and count only), alongside an
+8 × 12 zone map and a block of scalar features. EXTRA appends
+**six phase rows** — one per phase of play — on the same depth bands, with the faces
+mean speed, high-intensity share, pressing engagement and minutes, plus a scalar
+missing-tracking indicator in the scalar block. Nothing else in the model changes:
+switching `TRK=1 TRKMODE=phase` on (with EventXI's `FULLCH=1`) turns EventXI into EXTRA.
 
 ## Results
 
@@ -148,6 +150,14 @@ SUF=_h24 python case_study/scan_coach_cases.py 0 1
 SUF=_h24 python case_study/coach_case_figure.py --pin 165309:4640   # case-study figure
 ```
 
+**Reproducibility status.** The EXTRA stages — tracking tables, training, evaluation and
+the case study — run from the outputs of the EventXI feature stage. The EventXI feature
+stage itself (`scripts/01_features.sh`) does not yet regenerate every intermediate file
+from raw data: a few inputs (raw lineup extraction, player-ID bridge seed files, a merged
+goalkeeper feature table and the pre-match VAEP source table) have no producer script in
+this release, and some steps need reordering. These are listed in the roadmap and will be
+fixed in a later release.
+
 | Abstract | Script |
 |---|---|
 | Table 1 (2025 held-out R²) | `tracking/eval_2024only.py` |
@@ -180,6 +190,7 @@ Comments and docstrings are partly in Korean.
 - Bring seasons without tracking back into training with a learned missing-data model.
 - Weight phase profiles by the phase mix a team is expected to play against a given opponent.
 - Evaluate recommended elevens against match outcomes, not only outcome prediction.
+- Make `scripts/01_features.sh` run end to end from raw data: add producers for the raw lineup table, the player-ID bridge seeds, the merged goalkeeper features and the pre-match VAEP source table; fix the step order; freeze the scraped roster cache.
 
 ## Citation
 
