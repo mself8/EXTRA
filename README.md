@@ -14,32 +14,48 @@
 [![Venue](https://img.shields.io/badge/SSAC-2027%20abstract-lightgrey.svg)](#citation)
 [![Data](https://img.shields.io/badge/data-not%20included-red.svg)](#data-availability)
 
-[Why EXTRA](#why-extra) · [Features](#features) · [Architecture](#architecture) · [Extension](#how-extra-extends-eventxi) · [Results](#results) · [Phases](#phase-definitions) · [Install](#installation) · [Reproduce](#reproducing-the-abstract) · [Layout](#repository-layout) · [Roadmap](#roadmap) · [Citation](#citation)
+[Why EXTRA](#why-extra) · [Applications](#applications) · [Features](#features) · [Architecture](#architecture) · [Extension](#how-extra-extends-eventxi) · [Results](#results) · [Phases](#phase-definitions) · [Install](#installation) · [Reproduce](#reproducing-the-abstract) · [Layout](#repository-layout) · [Roadmap](#roadmap) · [Citation](#citation)
 
 </div>
 
 ---
 
-Before every match a coach names eleven starters from a squad of about nineteen.
-Event-based lineup models see what players do **on the ball**; part of a lineup's
-value lies **off the ball** and depends on the phase of play — who presses, who
-holds the line, who runs in transition.
+Clubs choose a starting eleven every match, and the choice is **counterfactual by nature**:
+staff must judge elevens that have never played together. Clubs now record optical tracking,
+yet published lineup models mostly rate players from on-ball events and miss the off-ball
+work that changes with the phase of play.
 
-**EXTRA** extends **EventXI**, an event-based lineup recommender, with player
-profiles built from 30 Hz optical tracking and organised by six phases of play.
-The model that scores players for outcome prediction also drives a constrained
-recommender, so the tracking information flows straight into the recommended
-starting eleven that staff review before kick-off.
+This repository holds a lineup recommender that learns from both sources:
+
+- **Event data** tells the recommender what each candidate adds **on the ball** in each pitch zone.
+- **Tracking** tells it whether the eleven covers the **off-ball work** each phase demands —
+  pressing, holding the line, recovering in transition.
+
+The model scores every squad member from their own past matches, so it can evaluate
+elevens that never played together; the same scores drive a constrained recommender
+whose output staff review before kick-off. In the code, the event-only model is
+**EventXI** and the event + tracking model is **EXTRA**.
 
 ## Why EXTRA
 
-| | EventXI | **EXTRA** |
+| | Ours: event data (EventXI) | **Ours: event + tracking data (EXTRA)** |
 |---|---|---|
 | Player evidence | Event channels × pitch-depth bands, pooled over each player's past matches | EventXI **+ phase-organised tracking profiles** |
 | Off-ball work | Not seen | Speed, high-intensity share, pressing engagement and time, per phase and depth band |
 | Output | Outcome prediction from the two elevens + constrained starting-eleven recommendation | Same, with tracking in every player score |
-| Data needed | Event data | Event data + one season of tracking; matches without tracking are flagged |
+| Data needed | Event data | Event data + one season of tracking (as in our experiments); the few matches without tracking are flagged |
 | Staff view | Recommended eleven and player scores | Recommended eleven, player scores **and phase profiles** |
+
+## Applications
+
+- **Pre-match selection** — compare the planned eleven with the recommendation and review each proposed change with its player score and phase profile.
+- **Player recruitment** — search for players by phase-specific work, e.g. who presses and who recovers in transition.
+- **Opponent-specific tactical adjustment** — weight phase profiles by the phase mix expected against a given opponent (roadmap).
+- **Simulation-based coaching** — compare counterfactual elevens before a match.
+
+Recommendations are evaluated here through outcome prediction and an illustrative case;
+a recommendation-level evaluation (score gap against the fielded eleven with a
+previous-eleven placebo) is on the roadmap.
 
 ## Features
 
@@ -91,8 +107,10 @@ histories from 2024 on; five-seed averages.
 | Ours, event data (EventXI) | 0.162 |
 | **Ours, event + tracking data (EXTRA)** | **0.177** |
 
-EXTRA improves on EventXI by +0.015 R² (positive in 90% of 2,000 paired match-bootstrap
-resamples; the 95% interval, [−0.006, +0.038], still includes zero). Across 741 outfield players, even within the same position the players
+The baselines score the coach's fielded eleven: the season-and-venue intercept alone, and the
+summed past minutes or past VAEP of the eleven. Adding tracking improves on the event-only model
+by +0.015 R², a 9% relative gain (positive in 90% of 2,000 paired match-bootstrap resamples; the
+95% interval, [−0.006, +0.038], still includes zero). Across 741 outfield players, even within the same position the players
 with the highest high-intensity share in the attacking phases are largely different
 from those with the highest share in the pressing phase (rank correlations 0.16–0.17).
 
@@ -195,7 +213,8 @@ Comments and docstrings are partly in Korean.
 
 - Bring seasons without tracking back into training with a learned missing-data model.
 - Weight phase profiles by the phase mix a team is expected to play against a given opponent.
-- Evaluate recommended elevens against match outcomes, not only outcome prediction.
+- Evaluate recommended elevens against match outcomes: score gap between the recommended and fielded eleven, with a previous-eleven placebo and simple selection rules (past minutes, past VAEP).
+- Align the case-study recommender with the EventXI paper's settings (formation prior, score rescaling).
 - Make `scripts/01_features.sh` run end to end from raw data: add producers for the raw lineup table, the player-ID bridge seeds, the merged goalkeeper features and the pre-match VAEP source table; fix the step order; freeze the scraped roster cache.
 
 ## Citation
